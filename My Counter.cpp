@@ -18,7 +18,7 @@ struct Item {
 
     }
     void print() {
-        cout << name << '\t' << x << '\t' << unit << '\n';
+        cout << name << '\t' << x << ' ' << unit << '\n';
     }
 };
 
@@ -58,22 +58,40 @@ char main_menu() {
     cout << "\n1: Display my list\n" //
         << "2: Add a new item to track\n" //
         << "3: Modify an item\n"
-        << "4: Save Changes\n" //
-        << "5: Exit\n"; //
+        << "4: Reset\n"
+        << "5: Delete\n"
+        << "6: Exit\n"; //
     cout << "\nEnter your option:\n";
     char option; cin >> option;
     return option;
 }
 
 /// features functions:
-void display_list() {
+int display_list_get_item(bool withAll = false, bool getItem = false) {
+    if (myList.size() == 1) {
+        cout << "Empty list !\n";
+        return 0;
+    }
+
     int n = myList.size();
     cout << "\n\t**** My List ****\n"
         << "\t-----------------\n";
-    for (int i = 1; i < n; ++i) {
+    int i;
+    for (i = 1; i < n; ++i) {
         cout << " [" << i << "] "; myList[i].print();
     }
+    if (withAll)
+        cout << " [" << i << "] " << "All\n";
     cout << '\n';
+
+    int idx = 0;
+    if (getItem)
+        do {
+            cout << "Enter the number of the item:\n";
+            cin >> idx;
+        } while (idx < 1 or idx > myList.size());
+
+    return idx;
 }
 void add_new_item() {
     Item tmp;
@@ -91,22 +109,32 @@ void add_new_item() {
     myList.push_back(tmp);
 }
 void modify_item() {
-    if (myList.size() == 1) {
-        cout << "Empty list !\n";
-        return;
-    }
-
-    display_list();
-    int idx;
-    do {
-        cout << "Enter the number of the item to modify:\n";
-        cin >> idx;
-    } while (idx < 1 or idx >= myList.size());
-
+    int idx = display_list_get_item(false, true);
     cout << "Enter the amount to add:\n";
     double amount; cin >> amount; // can be positive (increase) or negative (decrease)
-
     myList[idx].x += amount;
+}
+void reset() {
+    int idx = display_list_get_item(true, true);
+
+    if (idx == myList.size())
+        for (Item& it : myList)
+            it.x = 0;
+    else
+        myList[idx].x = 0;
+}
+void Delete() {
+    int idx = display_list_get_item(true, true);
+
+    if (idx == myList.size())
+        while(myList.size() > 1)
+            myList.pop_back();
+    else {
+        for (int i = idx; i < myList.size() - 1; ++i) {
+            swap(myList[i], myList[i + 1]);
+        }
+        myList.pop_back();
+    }
 }
 
 int main() {
@@ -118,27 +146,35 @@ int main() {
         option = main_menu();
         switch (option) {
             case '1':
-                display_list();
+                display_list_get_item();
                 break;
             case '2':
                 add_new_item();
-                cout << "ADDED~\n";
+                save_to_file(); // auto save
+                cout << "ADDED and SAVED~\n";
                 break;
             case '3':
                 modify_item();
-                cout << "MODIFIED~\n";
+                save_to_file(); // auto save
+                cout << "MODIFIED and SAVED~\n";
                 break;
             case '4':
+                reset();
                 save_to_file();
-                cout << "SAVED~\n";
+                cout << "DONE~\n";
                 break;
             case '5':
+                Delete();
+                save_to_file();
+                cout << "DELETED~\n";
+                break;
+            case '6':
                 cout << "See You Soon :)\n";
                 break;
             default: cout << "Wrong Input.. try again\n";
         }
         system("pause");
-    } while (option != '5');
+    } while (option != '6');
 
     return 0;
 }
